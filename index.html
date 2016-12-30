@@ -14,7 +14,7 @@
   }
   
   .node {
-    color: red;
+    cursor: pointer;
   }
   
   html {
@@ -64,10 +64,15 @@
     <button id='clearAll'>Clear All</button>
     <br />
     <button id='clearLines'>Clear Lines</button>
+    <br /> Current Path: <span id='currentPath'>0</span>
+    <br /> Best Path: <span id='bestPath'>0</span>
+    <br/> Total Nodes: <span id='numOfPoints'>0</span>
   </div>
   <script>
   var edit = 'addPoint';
   var pathLength = 0;
+  var bestPath = 0;
+  var pathComplete = false;
   var nodes = [];
   var path = [];
   var links = [];
@@ -112,7 +117,7 @@
     point.setAttribute('id', node.id);
     point.setAttribute('cx', node.x);
     point.setAttribute('cy', node.y);
-    point.setAttribute('r', 3);
+    point.setAttribute('r', 5);
     point.setAttribute('fill', 'red');
     point.setAttribute('stroke', 'red');
     points.appendChild(point);
@@ -153,11 +158,14 @@
     var x = evt.clientX - dim.left;
     var y = evt.clientY - dim.top;
     var node = createNode(x, y);
+    var numOfPoints = document.getElementById('numOfPoints');
     addSVGNode(node);
     nodes.push(node);
+    numOfPoints.innerHTML = nodes.length;
   }
 
   function addLink(evt) {
+    var currentPath = document.getElementById('currentPath');
     var id = Number(evt.target.id);
     var node = nodes.filter(function(n) {
       return n.id === id;
@@ -166,8 +174,8 @@
       return n.id === id;
     });
     var link;
-    if (exists.length === 0 ||
-      path.length === nodes.length) {
+    pathComplete = (path.length === nodes.length && path[0] === exists[0]);
+    if (exists.length === 0 || pathComplete) {
       path.push(node);
       if (path.length >= 2) {
         link = createLink(path[path.length - 2], path[path.length - 1]);
@@ -176,7 +184,7 @@
         pathLength = links.reduce(function(value, link) {
           return link.length() + value;
         }, 0);
-        console.log(pathLength);
+        currentPath.innerHTML = Math.round(pathLength * 100) / 100;
       }
     }
   }
@@ -199,6 +207,15 @@
 
   function clearLines() {
     var lines = document.getElementsByClassName('lines')[0];
+    var bp = document.getElementById('bestPath');
+    var cp = document.getElementById('currentPath');
+    var currentPath = Math.round(pathLength * 100) / 100;
+    if (pathComplete) {
+      bestPath = (bestPath === 0 || bestPath > currentPath) ? currentPath : bestPath;
+      bp.innerHTML = bestPath;
+    }
+    cp.innerHTML = 0;
+    pathComplete = false;
     removedChildElements(lines);
     links = [];
     path = [];
