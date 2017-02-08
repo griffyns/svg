@@ -7,237 +7,39 @@
   <!--[if lt IE 9]>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js'></script>
   <![endif]-->
-  <style>
-  .paper {
-    border: solid 1px black;
-    border-collapse: collapse;
-  }
-  
-  .node {
-    cursor: pointer;
-  }
-  
-  html {
-    box-sizing: border-box;
-    height: 100%;
-  }
-  
-  body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    /*    background-color: #434343;
-    background-size: 50px 50px;
-    background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);*/
-  }
-  
-  svg {
-    margin-top: 12px;
-    margin-left: 12px;
-    width: 500px;
-    height: 500px;
-    /*    position: absolute;
-    background-color: transparent;
-    background-size: 5px 5px;
-    background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);*/
-  }
-  </style>
+  <link rel="stylesheet" type="text/css" href="index.css">
 </head>
 
 <body>
-  <svg width='500' height='500' class='paper'>
-    <g class='grid'></g>
-    <g class='points'></g>
-    <g class='lines'></g>
-    <g class='other'>
-    </g>
-  </svg>
-  <div style='float: left;'>
+  <div style='float: left; margin: 10px; width:150px'>
     <input type='radio' name='edit' value='addPoint' checked> Add Point
     <br />
     <input type='radio' name='edit' value='addLink'> Add Link
     <br />
     <input type='radio' name='edit' value='removePoint'> Remove Point
     <br />
-    <input type='radio' name='edit' value='removePoint'> Remove Point
+    <input type='radio' name='edit' value='removeLink'> Link Point
     <br />
     <button id='clearAll'>Clear All</button>
     <br />
     <button id='clearLines'>Clear Lines</button>
+    <br />
+    <button id='generatePaths'>Generate Paths</button>
     <br /> Current Path: <span id='currentPath'>0</span>
     <br /> Best Path: <span id='bestPath'>0</span>
     <br/> Total Nodes: <span id='numOfPoints'>0</span>
+    <br/> Total Possible Path: <span id='numOfpaths'>0</span>
   </div>
-  <script>
-  var edit = 'addPoint';
-  var pathLength = 0;
-  var bestPath = 0;
-  var pathComplete = false;
-  var nodes = [];
-  var path = [];
-  var links = [];
-  var id = {
-    id: 0,
-    new: function() {
-      return this.id++;
-    }
-  };
-
-  function createNode(x, y) {
-    var node = {
-      x: x,
-      y: y,
-      id: id.new()
-    }
-
-    return node;
-  };
-
-  function createLink(node1, node2) {
-    var link = {
-      node1: node1,
-      node2: node2,
-      id: id.new(),
-      length: function() {
-        var a = Math.abs(node1.x - node2.x);
-        var b = Math.abs(node1.y - node2.y);
-        var c = Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-        return c;
-      }
-    }
-
-    return link;
-  };
-
-  function addSVGNode(node) {
-    var points = document.getElementsByClassName('points')[0];
-    var point = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    // var point = document.createElement('circle'); 
-    point.setAttribute('class', 'node');
-    point.setAttribute('id', node.id);
-    point.setAttribute('cx', node.x);
-    point.setAttribute('cy', node.y);
-    point.setAttribute('r', 5);
-    point.setAttribute('fill', 'red');
-    point.setAttribute('stroke', 'red');
-    points.appendChild(point);
-  };
-
-  function addSVGLink(link) {
-    var lines = document.getElementsByClassName('lines')[0];
-    var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('id', link.id);
-    line.setAttribute('x1', link.node1.x);
-    line.setAttribute('y1', link.node1.y);
-    line.setAttribute('x2', link.node2.x);
-    line.setAttribute('y2', link.node2.y);
-    line.setAttribute('class', 'link');
-    line.setAttribute('stroke-width', 1);
-    line.setAttribute('stroke', 'black');
-    lines.appendChild(line);
-  }
-
-  function clickedSVG(evt) {
-    var name = evt.target.nodeName;
-    if (name === 'svg' && edit === 'addPoint') {
-      return addPoint(evt);
-    }
-    if (name === 'circle' && edit === 'addLink') {
-      return addLink(evt);
-    }
-    return evt.stopPropagation();
-  };
-
-  function clickedRadio(evt) {
-    edit = evt.target.value;
-  };
-
-  function addPoint(evt) {
-    var e = evt.target;
-    var dim = e.getBoundingClientRect();
-    var x = evt.clientX - dim.left;
-    var y = evt.clientY - dim.top;
-    var node = createNode(x, y);
-    var numOfPoints = document.getElementById('numOfPoints');
-    addSVGNode(node);
-    nodes.push(node);
-    numOfPoints.innerHTML = nodes.length;
-  }
-
-  function addLink(evt) {
-    var currentPath = document.getElementById('currentPath');
-    var id = Number(evt.target.id);
-    var node = nodes.filter(function(n) {
-      return n.id === id;
-    })[0];
-    var exists = path.filter(function(n) {
-      return n.id === id;
-    });
-    var link;
-    pathComplete = (path.length === nodes.length && path[0] === exists[0]);
-    if (exists.length === 0 || pathComplete) {
-      path.push(node);
-      if (path.length >= 2) {
-        link = createLink(path[path.length - 2], path[path.length - 1]);
-        addSVGLink(link);
-        links.push(link);
-        pathLength = links.reduce(function(value, link) {
-          return link.length() + value;
-        }, 0);
-        currentPath.innerHTML = Math.round(pathLength * 100) / 100;
-      }
-    }
-  }
-
-  function removedChildElements(element) {
-    while (element.firstChild) {
-      element.removeChild(element.firstChild);
-    }
-  };
-
-  function clearAll() {
-    var points = document.getElementsByClassName('points')[0];
-    var lines = document.getElementsByClassName('lines')[0];
-    removedChildElements(points);
-    removedChildElements(lines);
-    nodes = [];
-    links = [];
-    path = [];
-  };
-
-  function clearLines() {
-    var lines = document.getElementsByClassName('lines')[0];
-    var bp = document.getElementById('bestPath');
-    var cp = document.getElementById('currentPath');
-    var currentPath = Math.round(pathLength * 100) / 100;
-    if (pathComplete) {
-      bestPath = (bestPath === 0 || bestPath > currentPath) ? currentPath : bestPath;
-      bp.innerHTML = bestPath;
-    }
-    cp.innerHTML = 0;
-    pathComplete = false;
-    removedChildElements(lines);
-    links = [];
-    path = [];
-  };
-
-  function attachEvents() {
-    var svg = document.getElementsByTagName('svg')[0];
-    var radios = document.getElementsByName('edit');
-    var clearall = document.getElementById('clearAll');
-    var clearlines = document.getElementById('clearLines');
-    radios.forEach(function(radio) {
-      radio.addEventListener('click', clickedRadio)
-    })
-    svg.addEventListener('click', clickedSVG);
-    clearall.addEventListener('click', clearAll);
-    clearlines.addEventListener('click', clearLines);
-  }
-
-  window.onload = function() {
-    attachEvents();
-  };
-  </script>
+  <svg width='500' height='500' class='paper'>
+    <g class='lines'></g>
+    <g class='points'></g>
+    <g class='grid'></g>
+    <g class='other'>
+    </g>
+  </svg>
+  <div id='pathList' class='path_list'></div>
+  <script src="node_modules/ramda/dist/ramda.js"></script>
+  <script src="index.js"></script>
 </body>
 
 </html>

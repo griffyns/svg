@@ -1,0 +1,56 @@
+  .paper {
+    border: solid 1px black;
+    border-collapse: collapse;
+    position: relative;
+    display: inline-block;
+    float: left;
+  }
+  
+  .node {
+    cursor: pointer;
+    z-index: 3;
+  }
+  
+  .link {
+    z-index: 2;
+  }
+  
+  .selected {
+    color: blue;
+  }
+  
+  .path_list {
+    height: 500px;
+    border: solid 1px black;
+    border-collapse: collapse;
+    display: inline-block;
+    float: left;
+    overflow: auto;
+    margin-top: 12px;
+    margin-left: 12px;
+  }
+  
+  html {
+    box-sizing: border-box;
+    height: 100%;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    /*    background-color: #434343;
+    background-size: 50px 50px;
+    background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);*/
+  }
+  
+  svg {
+    margin-top: 12px;
+    margin-left: 12px;
+    width: 500px;
+    height: 500px;
+    /*    position: absolute;
+    background-color: transparent;
+    background-size: 5px 5px;
+    background-image: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent);*/
+  }

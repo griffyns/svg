@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/griffyns/svg/issues"
   },
-  "homepage": "https://github.com/griffyns/svg#readme"
+  "homepage": "https://github.com/griffyns/svg#readme",
+  "dependencies": {
+    "ramda": "^0.23.0"
+  }
 }
