@@ -4,7 +4,8 @@ var bestPath = 0;
 var pathComplete = false;
 var nodes = [];
 var path = [];
-var links = [];
+var allLinks = {};
+var pathLinks = [];
 var id = {
   id: 0,
   new: function () {
@@ -33,14 +34,14 @@ function createLink(node1, node2) {
   var link = {
     node1: node1,
     node2: node2,
-    id: id.new(),
+    id: (node1.id < node2.id) ? node1.id + '-' + node2.id : node2.id + '-' + node1.id,
     length: calculateLength(node1, node2)
   }
 
   return link;
 };
 
-function addSVGNode(node) {
+function drawSVGNode(node) {
   var points = document.getElementsByClassName('points')[0];
   var point = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
   // var point = document.createElement('circle'); 
@@ -55,7 +56,7 @@ function addSVGNode(node) {
   points.appendChild(point);
 };
 
-function addSVGLink(link) {
+function drawSVGLink(link) {
   var lines = document.getElementsByClassName('lines')[0];
   var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   line.setAttribute('id', link.id);
@@ -91,34 +92,54 @@ function addPoint(evt) {
   var y = evt.clientY - dim.top;
   var node = createNode(x, y);
   var numOfPoints = document.getElementById('numOfPoints');
-  addSVGNode(node);
+  drawSVGNode(node);
+  createLinks(node);
   nodes.push(node);
   numOfPoints.innerHTML = nodes.length;
 }
 
+function createLinks(node1) {
+  nodes.map(function(node2) {
+    var link = createLink(node1, node2);
+    allLinks[link.id] = link;
+  });
+}
+
 function addLinkEvt(evt) {
   var id = Number(evt.target.id);
-  evt.target.setAttribute('stroke', 'blue');
   addLink(id);
 } 
 
-function addLink(id) {
-  var currentPath = document.getElementById('currentPath');
-  var node = nodes.filter(function (n) {
+function getNodeById(id) {
+  return nodes.filter(function (n) {
     return n.id === id;
   })[0];
+}
+
+function addLink(id) {
+  var point = document.getElementById(id);
+  var currentPath = document.getElementById('currentPath');
   var exists = path.filter(function (n) {
-    return n.id === id;
+    return n === id;
   });
+  var linkID;
   var link;
+  var id1;
+  var id2;
+
+  point.setAttribute('stroke', 'blue');
   pathComplete = (path.length === nodes.length && path[0] === exists[0]);
   if (exists.length === 0 || pathComplete) {
-    path.push(node);
+    path.push(id);
     if (path.length >= 2) {
-      link = createLink(path[path.length - 2], path[path.length - 1]);
-      addSVGLink(link);
-      links.push(link);
-      pathLength = links.reduce(function (value, link) {
+      id1 = path[path.length - 2];
+      id2 = path[path.length - 1];
+
+      linkID = (id1 < id2) ? id1 + '-' + id2 : id2 + '-' + id1;
+      link = allLinks[linkID];
+      drawSVGLink(link);
+      pathLinks.push(link);
+      pathLength = pathLinks.reduce(function (value, link) {
         return link.length + value;
       }, 0);
       currentPath.innerHTML = Math.round(pathLength * 100) / 100;
@@ -164,8 +185,8 @@ function clearLines() {
   cp.innerHTML = 0;
   pathComplete = false;
   removedChildElements(lines);
-  links = [];
   path = [];
+  pathLinks = [];
 };
 
 function swap(a, index1, index2) {
@@ -195,11 +216,6 @@ function permutate(a, index, callback) {
       newArray = swap(array, i, index);
       count = count + permutate(newArray, index - 1, callback);
     }
-
-    // for (var i = index + 1; i < array.length; i++) {
-    //   newArray = swap(array, i, index);
-    //   count = count + permutate(newArray, index + 1, callback);
-    // }
   }
 
   return count;
@@ -233,6 +249,7 @@ function calculateTotalPaths() {
   var input = R.pluck('id', nodes);
   var startNode = input.shift();
   var results;
+  var permutations
 
   if (n > 2) {
     // if less then 2 we would just multiply by 1 and 2
@@ -251,12 +268,41 @@ function calculateTotalPaths() {
 
   domTP.innerHTML = totalPaths;
   results = permute(input);
-  results.permutations.map(function(permutation) {
+  results.permutations = results.permutations.map(function(permutation) {
+    var linkLen = [];
+    var length;
+    var id1;
+    var id2;
     permutation.splice(0,0,startNode);
     permutation.push(startNode);
+
+    permutation.map(function(id, index) {
+      var id2;
+      var linkID;
+
+      if(index > 0) {
+        id2 = permutation[index - 1];
+        linkID = (id < id2) ? id + '-' + id2 : id2 + '-' + id;
+        linkLen.push(allLinks[linkID]);
+      }
+    });
+
+    length = linkLen.reduce(function(acc, link) {
+      return acc + link.length;
+    }, 0);
+
+    return {
+      length: length,
+      permutation: permutation
+    };
+  })
+
+  permutations = results.permutations.sort(function(a, b) {
+    return a.length < b.length ? -1 : 1;
   });
 
-  console.log(results);
+  results.permutations = permutations;
+
   updatePaths(results);
 }
 
@@ -266,10 +312,13 @@ function updatePaths(results) {
 
   results.permutations.map(function(permutation){
     var div = document.createElement('div');
-    div.innerHTML = permutation.join(',');
-    div.addEventListener('click', function(e) {
-      showPath(permutation);
+    var a = document.createElement('a');
+    a.href='#';
+    a.innerHTML = permutation.permutation.join(',');
+    a.addEventListener('click', function(e) {
+      showPath(permutation.permutation);
     });
+    div.appendChild(a);
     domPaths.appendChild(div);
   })
 };
